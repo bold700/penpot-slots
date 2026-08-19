@@ -22,8 +22,17 @@ Voeg toe in Penpot via: `http://localhost:7779/manifest.json`
 ## Hosting
 
 `manifest.json` gebruikt `"version": 2`, dus Penpot zoekt `plugin.js` en
-`icon.svg` op vanaf de plek waar de manifest staat. Zet de bestanden op een
-webserver, in de root of in een submap, en installeer:
+`icon.svg` op vanaf de plek waar de manifest staat. Zet deze vier bestanden op een
+webserver, in de root of in een submap:
+
+```
+manifest.json
+plugin.js
+index.html
+icon.svg
+```
+
+En installeer:
 
 ```
 https://jouw-host/pad/manifest.json
