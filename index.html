@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Slots</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #1e1e1e;
+      --surface: #252525;
+      --surface-2: #2e2e2e;
+      --surface-3: #383838;
+      --border: #333;
+      --border-hover: #4a4a4a;
+      --text: #e0e0e0;
+      --text-muted: #888;
+      --text-subtle: #555;
+      --accent: #7c5cfc;
+      --accent-dim: #7c5cfc1a;
+      --accent-hover: #6b4de6;
+      --success: #22c55e;
+      --success-dim: #22c55e1a;
+      --error: #ef4444;
+      --error-dim: #ef44441a;
+      --slot-color: #f59e0b;
+      --slot-dim: #f59e0b15;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 12px;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px 9px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .header-icon {
+      width: 18px; height: 18px; border-radius: 4px;
+      background: var(--slot-color);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; color: #000; font-weight: 700;
+    }
+    .header h1 { font-size: 12px; font-weight: 600; }
+    .header .version { font-size: 10px; color: var(--text-muted); margin-left: auto; }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .tab {
+      flex: 1; padding: 8px 0;
+      font-size: 11px; font-weight: 500;
+      text-align: center; cursor: pointer;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      user-select: none;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+    /* ── Body ── */
+    .panel { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+    .panel.hidden { display: none; }
+
+    .scroll { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+
+    /* ── State messages ── */
+    .state-msg {
+      text-align: center; color: var(--text-muted);
+      padding: 28px 16px; line-height: 1.6;
+    }
+    .state-msg strong { color: var(--text); display: block; margin-bottom: 4px; font-size: 13px; }
+
+    /* ── Labels ── */
+    .label {
+      font-size: 10px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 5px;
+    }
+
+    /* ── Selection pill ── */
+    .sel-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 7px; padding: 8px 11px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .type-pill {
+      font-size: 10px; font-weight: 600; padding: 1px 6px;
+      border-radius: 4px; background: var(--accent-dim); color: var(--accent);
+      flex-shrink: 0;
+    }
+    .sel-name {
+      font-size: 12px; font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* ── Buttons ── */
+    button {
+      font-family: inherit; font-size: 11px; font-weight: 500;
+      border: none; border-radius: 6px; cursor: pointer; padding: 6px 11px;
+      transition: background 0.12s, opacity 0.12s;
+    }
+    button:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+    .btn-danger { background: var(--error-dim); color: var(--error); }
+    .btn-danger:hover:not(:disabled) { background: #ef444428; }
+    .btn-full { width: 100%; text-align: center; }
+
+    /* ── Instance warning ── */
+    .instance-notice {
+      background: #7c5cfc12; border: 1px solid #7c5cfc28;
+      border-radius: 7px; padding: 9px 11px;
+      font-size: 11px; color: #a78bfa; line-height: 1.55;
+    }
+    .instance-notice strong { color: #c4b5fd; }
+
+    /* ── Slot list ── */
+    .slot-list { display: flex; flex-direction: column; gap: 5px; }
+
+    .slot-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 7px; overflow: hidden;
+    }
+
+    .slot-head {
+      display: flex; align-items: center; gap: 7px;
+      padding: 8px 11px; cursor: pointer; user-select: none;
+    }
+    .slot-head:hover { background: var(--surface-2); }
+
+    .slot-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--slot-color); flex-shrink: 0; }
+
+    .slot-name { font-size: 12px; font-weight: 500; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .slot-badge {
+      font-size: 10px; color: var(--text-muted);
+      background: var(--surface-2); padding: 1px 6px; border-radius: 10px;
+    }
+
+    .slot-chevron { font-size: 9px; color: var(--text-muted); transition: transform 0.15s; }
+    .slot-item.open .slot-chevron { transform: rotate(90deg); }
+
+    .slot-body { display: none; border-top: 1px solid var(--border); padding: 9px 11px 10px; }
+    .slot-item.open .slot-body { display: block; }
+
+    /* children list */
+    .child-list { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
+    .child-row {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 7px; border-radius: 4px;
+      background: var(--surface-2); font-size: 11px; color: var(--text-muted);
+    }
+    .child-type {
+      font-size: 9px; font-weight: 600; padding: 1px 5px; border-radius: 3px;
+      background: var(--border); text-transform: uppercase;
+    }
+    .slot-empty { font-size: 11px; color: var(--text-subtle); font-style: italic; margin-bottom: 8px; }
+
+    /* slot actions */
+    .slot-actions { display: flex; gap: 5px; }
+
+    /* inline confirm */
+    .confirm-row {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 9px; background: var(--error-dim); border-radius: 6px;
+      font-size: 11px; color: var(--error); margin-top: 7px;
+    }
+    .confirm-row span { flex: 1; }
+
+    /* ── Component browser ── */
+    .comp-search-wrap {
+      padding: 10px 14px 0;
+      flex-shrink: 0;
+    }
+    .comp-search {
+      width: 100%; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 7px;
+      color: var(--text); font-family: inherit; font-size: 12px;
+      padding: 7px 10px; outline: none;
+      transition: border-color 0.15s;
+    }
+    .comp-search::placeholder { color: var(--text-muted); }
+    .comp-search:focus { border-color: var(--accent); }
+
+    .comp-list { flex: 1; overflow-y: auto; padding: 8px 14px 12px; }
+
+    .comp-group-label {
+      font-size: 10px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 8px 0 4px;
+    }
+
+    .comp-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 9px; border-radius: 6px; cursor: pointer;
+      transition: background 0.1s;
+      border: 1px solid transparent;
+    }
+    .comp-item:hover { background: var(--surface-2); }
+    .comp-item.selected { background: var(--accent-dim); border-color: #7c5cfc33; }
+
+    .comp-icon {
+      width: 28px; height: 28px; border-radius: 5px;
+      background: var(--surface-2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; color: var(--text-muted); flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+    .comp-item.selected .comp-icon { background: var(--accent-dim); border-color: #7c5cfc44; color: var(--accent); }
+
+    .comp-info { flex: 1; min-width: 0; }
+    .comp-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .comp-path { font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .comp-empty { padding: 24px 0; text-align: center; color: var(--text-muted); font-size: 12px; }
+
+    /* place bar */
+    .place-bar {
+      flex-shrink: 0; padding: 10px 14px;
+      border-top: 1px solid var(--border);
+      display: flex; gap: 7px; align-items: center;
+    }
+    .place-bar-info { flex: 1; font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .place-bar-info strong { color: var(--text); }
+
+    /* ── Hint ── */
+    .hint {
+      background: var(--slot-dim); border: 1px solid #f59e0b28;
+      border-radius: 7px; padding: 9px 11px;
+      font-size: 11px; color: #c49535; line-height: 1.6;
+    }
+    .hint strong { color: var(--slot-color); }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 10px; left: 50%;
+      transform: translateX(-50%) translateY(6px);
+      background: var(--surface-2); border: 1px solid var(--border-hover);
+      border-radius: 7px; padding: 6px 13px;
+      font-size: 11px; color: var(--text);
+      opacity: 0; transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none; white-space: nowrap; z-index: 100;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: var(--success); color: var(--success); }
+    .toast.error { border-color: var(--error); color: var(--error); }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">◈</div>
+  <h1>Slots</h1>
+  <span class="version">beta</span>
+</div>
+
+<div class="tabs">
+  <div class="tab active" id="tab-slots" onclick="switchTab('slots')">Slots</div>
+  <div class="tab" id="tab-components" onclick="switchTab('components')">Componenten</div>
+</div>
+
+<!-- SLOTS PANEL -->
+<div class="panel" id="panel-slots">
+  <div class="scroll" id="slots-scroll">
+    <div class="state-msg"><strong>Laden...</strong></div>
+  </div>
+</div>
+
+<!-- COMPONENTS PANEL -->
+<div class="panel hidden" id="panel-components">
+  <div class="comp-search-wrap">
+    <input class="comp-search" id="comp-search" type="text" placeholder="Zoek componenten..." oninput="filterComponents(this.value)" />
+  </div>
+  <div class="comp-list" id="comp-list">
+    <div class="comp-empty">Laden...</div>
+  </div>
+  <div class="place-bar" id="place-bar">
+    <span class="place-bar-info" id="place-info">Kies een component</span>
+    <button class="btn-primary" id="place-btn" disabled onclick="placeSelected()">Plaatsen</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────
+  let state = null;
+  let openSlots = new Set();
+  let confirmSlotId = null;
+  let activeTab = 'slots';
+  let activeSlotForPlace = null; // { slotId, slotX, slotY, slotName }
+
+  let allComponents = []; // flat list: { id, name, path, group }
+  let filteredComponents = [];
+  let selectedComponentId = null;
+  let placeMode = 'place'; // 'place' | 'replace'
+
+  // ── Messaging ──────────────────────────────────────────────────
+  window.addEventListener('message', e => {
+    const msg = e.data;
+    if (!msg || !msg.type) return;
+
+    if (msg.type === 'selection') { state = msg.data; renderSlots(); }
+    if (msg.type === 'components') { receiveComponents(msg.groups); }
+    if (msg.type === 'slot-children') { renderSlotChildren(msg.slotId, msg.children); }
+    if (msg.type === 'selected-content') { showToast(`${msg.count} item(s) geselecteerd`, 'success'); }
+    if (msg.type === 'placed') {
+      showToast(msg.fallback
+        ? `"${msg.name}" geplaatst op canvas, sleep in slot`
+        : `"${msg.name}" in slot geplaatst`, 'success');
+      if (msg.reason) console.warn('appendChild geweigerd:', msg.reason);
+    }
+    if (msg.type === 'replaced') {
+      if (msg.method === 'swap') {
+        showToast(`Vervangen door "${msg.name}", overrides behouden`, 'success');
+      } else if (msg.fallback) {
+        showToast(`Oud verwijderd, "${msg.name}" geplaatst op canvas, sleep in slot`, 'success');
+        if (msg.reason) console.warn('appendChild geweigerd:', msg.reason);
+      } else {
+        showToast(`Vervangen door "${msg.name}"`, 'success');
+      }
+      activeSlotForPlace = null;
+      setTimeout(() => switchTab('slots'), 300);
+    }
+    if (msg.type === 'child-methods') {
+      console.log('Child methods:', msg.methods);
+      console.log('Child props:', msg.props);
+    }
+    if (msg.type === 'cleared') { showToast('Slot leeggemaakt', 'success'); confirmSlotId = null; }
+    if (msg.type === 'marked') { showToast('Frame gemarkeerd als [slot]', 'success'); }
+    if (msg.type === 'error') { showToast(msg.message, 'error'); }
+  });
+
+  function send(msg) { parent.postMessage(msg, '*'); }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    send({ type: 'ready' });
+    send({ type: 'get-components' });
+  });
+
+  // ── Tabs ───────────────────────────────────────────────────────
+  function switchTab(tab) {
+    activeTab = tab;
+    document.getElementById('tab-slots').classList.toggle('active', tab === 'slots');
+    document.getElementById('tab-components').classList.toggle('active', tab === 'components');
+    document.getElementById('panel-slots').classList.toggle('hidden', tab !== 'slots');
+    document.getElementById('panel-components').classList.toggle('hidden', tab !== 'components');
+  }
+
+  // ── Slots panel ────────────────────────────────────────────────
+  function renderSlots() {
+    const el = document.getElementById('slots-scroll');
+    if (!state) return;
+
+    if (state.type === 'empty') {
+      el.innerHTML = `<div class="state-msg"><strong>Niets geselecteerd</strong>Selecteer een frame of component.</div>${hint()}`;
+      return;
+    }
+    if (state.type === 'multi') {
+      el.innerHTML = `<div class="state-msg"><strong>Meerdere objecten</strong>Selecteer één frame of component.</div>`;
+      return;
+    }
+
+    const { name, shapeType, slots } = state;
+    const isFrame = shapeType === 'frame' || shapeType === 'board';
+    const isSlotFrame = isFrame && name.startsWith('[slot]');
+    let html = '';
+
+    // Selected shape
+    html += `<div>
+      <div class="label">Geselecteerd</div>
+      <div class="sel-card">
+        <span class="type-pill">${escHtml(shapeType)}</span>
+        <span class="sel-name">${escHtml(name)}</span>
+      </div>
+    </div>`;
+
+    // Mark / unmark
+    if (isFrame) {
+      html += `<div>
+        <div class="label">Dit frame</div>
+        ${isSlotFrame
+          ? `<button class="btn-ghost btn-full" onclick="send({type:'unmark-slot'})">Verwijder [slot] markering</button>`
+          : `<button class="btn-primary btn-full" onclick="send({type:'mark-slot'})">Markeer als [slot]</button>`}
+      </div>`;
+    }
+
+    // Instance notice
+    if (state.isInstance && slots && slots.length > 0) {
+      html += `<div class="instance-notice">
+        <strong>Dit is een instantie</strong><br>
+        Slots zijn hier alleen-lezen. Selecteer de <strong>main component</strong> via het Assets-panel om content in te voegen.
+      </div>`;
+    }
+
+    // Slots
+    if (slots && slots.length > 0) {
+      html += `<div>
+        <div class="label">Slots (${slots.length})</div>
+        <div class="slot-list">${slots.map(s => slotItem(s, state.isInstance)).join('')}</div>
+      </div>`;
+    } else if (isFrame && !isSlotFrame) {
+      // frame with no slots yet — no extra message needed
+    } else if (!isFrame) {
+      html += `<div class="state-msg" style="padding:14px 0">
+        <strong>Geen slots gevonden</strong>
+        Voeg frames toe met een <code style="background:var(--surface-2);padding:1px 5px;border-radius:3px">[slot]</code> prefix.
+      </div>`;
+    }
+
+    html += hint();
+    el.innerHTML = html;
+
+    for (const slotId of openSlots) {
+      const el2 = document.getElementById(`slot-${slotId}`);
+      if (el2) {
+        el2.classList.add('open');
+        send({ type: 'get-slot-children', parentId: state.id, slotId });
+      }
+    }
+  }
+
+  function slotItem(slot, readOnly) {
+    const displayName = slot.name.replace(/^\[slot\]\s*/, '');
+    return `
+      <div class="slot-item" id="slot-${slot.id}">
+        <div class="slot-head" onclick="toggleSlot('${slot.id}')">
+          <div class="slot-dot"></div>
+          <span class="slot-name">${escHtml(displayName)}</span>
+          <span class="slot-chevron">▶</span>
+        </div>
+        <div class="slot-body">
+          <div class="child-list" id="children-${slot.id}"><div class="slot-empty">Laden...</div></div>
+          <div class="slot-actions">
+            ${readOnly
+              ? `<span style="font-size:10px;color:var(--text-subtle);font-style:italic">Alleen-lezen op instantie</span>`
+              : `<button class="btn-primary" style="flex:1" onclick="openComponentsForSlot('${slot.id}',${slot.x},${slot.y},'${escAttr(displayName)}')">+ Voeg toe</button>
+                 <button class="btn-ghost" onclick="selectContent('${slot.id}')">Selecteer</button>
+                 <button class="btn-danger" onclick="askClear('${slot.id}')">✕</button>`
+            }
+          </div>
+          <div id="confirm-${slot.id}"></div>
+        </div>
+      </div>`;
+  }
+
+  function renderSlotChildren(slotId, children) {
+    const el = document.getElementById(`children-${slotId}`);
+    if (!el) return;
+    const slot = state && state.slots && state.slots.find(s => s.id === slotId);
+    const readOnly = state && state.isInstance;
+
+    if (!children || children.length === 0) {
+      el.innerHTML = `<div class="slot-empty">Leeg — gebruik "+ Voeg toe" of sleep een component erin</div>`;
+      return;
+    }
+    el.innerHTML = children.map(c => `
+      <div class="child-row">
+        <span class="child-type">${c.type}</span>
+        <span style="flex:1">${escHtml(c.name)}</span>
+        ${!readOnly && slot ? `<button class="btn-ghost" style="padding:2px 7px;font-size:10px" onclick="openReplaceForSlot('${slotId}',${slot.x},${slot.y},'${escAttr(slot.name.replace(/^\[slot\]\s*/,''))}')">Vervang</button>` : ''}
+      </div>`).join('');
+  }
+
+  function toggleSlot(slotId) {
+    const el = document.getElementById(`slot-${slotId}`);
+    if (!el) return;
+    const isOpen = el.classList.toggle('open');
+    if (isOpen) {
+      openSlots.add(slotId);
+      send({ type: 'get-slot-children', parentId: state.id, slotId });
+    } else {
+      openSlots.delete(slotId);
+    }
+  }
+
+  function selectContent(slotId) {
+    if (!state) return;
+    send({ type: 'select-slot-content', parentId: state.id, slotId });
+  }
+
+  function openComponentsForSlot(slotId, slotX, slotY, slotName) {
+    activeSlotForPlace = { slotId, slotX, slotY, slotName };
+    placeMode = 'place';
+    selectedComponentId = null;
+    updatePlaceBar();
+    switchTab('components');
+    document.getElementById('comp-search').focus();
+  }
+
+  function openReplaceForSlot(slotId, slotX, slotY, slotName) {
+    activeSlotForPlace = { slotId, slotX, slotY, slotName };
+    placeMode = 'replace';
+    selectedComponentId = null;
+    updatePlaceBar();
+    switchTab('components');
+    document.getElementById('comp-search').focus();
+  }
+
+  function askClear(slotId) {
+    confirmSlotId = slotId;
+    const el = document.getElementById(`confirm-${slotId}`);
+    if (!el) return;
+    el.innerHTML = `<div class="confirm-row">
+      <span>Slot leegmaken?</span>
+      <button class="btn-danger" style="padding:3px 9px" onclick="doClear('${slotId}')">Leegmaken</button>
+      <button class="btn-ghost" style="padding:3px 9px" onclick="cancelClear('${slotId}')">Annuleer</button>
+    </div>`;
+  }
+  function doClear(slotId) {
+    send({ type: 'clear-slot', parentId: state.id, slotId });
+    const el = document.getElementById(`confirm-${slotId}`);
+    if (el) el.innerHTML = '';
+  }
+  function cancelClear(slotId) {
+    const el = document.getElementById(`confirm-${slotId}`);
+    if (el) el.innerHTML = '';
+    confirmSlotId = null;
+  }
+
+  function hint() {
+    return `<div class="hint">
+      <strong>Workflow:</strong><br>
+      Markeer een frame als slot → gebruik <strong>+ Voeg toe</strong> om een component te selecteren en op de slot-positie te plaatsen → sleep het in het slot via het lagen-panel.
+    </div>`;
+  }
+
+  // ── Components panel ───────────────────────────────────────────
+  function receiveComponents(groups) {
+    allComponents = [];
+    for (const [group, items] of Object.entries(groups)) {
+      for (const item of items) {
+        allComponents.push({ ...item, group });
+      }
+    }
+    allComponents.sort((a, b) => a.name.localeCompare(b.name));
+    filteredComponents = [...allComponents];
+    renderComponentList();
+  }
+
+  function filterComponents(query) {
+    const q = query.toLowerCase().trim();
+    filteredComponents = q
+      ? allComponents.filter(c => c.name.toLowerCase().includes(q) || c.group.toLowerCase().includes(q))
+      : [...allComponents];
+    selectedComponentId = null;
+    updatePlaceBar();
+    renderComponentList();
+  }
+
+  function renderComponentList() {
+    const el = document.getElementById('comp-list');
+    if (filteredComponents.length === 0) {
+      el.innerHTML = `<div class="comp-empty">Geen componenten gevonden</div>`;
+      return;
+    }
+
+    // Group
+    const grouped = {};
+    for (const c of filteredComponents) {
+      if (!grouped[c.group]) grouped[c.group] = [];
+      grouped[c.group].push(c);
+    }
+
+    const showGroups = Object.keys(grouped).length > 1;
+    let html = '';
+    for (const [group, items] of Object.entries(grouped)) {
+      if (showGroups) html += `<div class="comp-group-label">${escHtml(group)}</div>`;
+      for (const item of items) {
+        const sel = selectedComponentId === item.id ? ' selected' : '';
+        const initial = item.name.charAt(0).toUpperCase();
+        html += `<div class="comp-item${sel}" id="ci-${item.id}" onclick="selectComp('${item.id}')">
+          <div class="comp-icon">${initial}</div>
+          <div class="comp-info">
+            <div class="comp-name">${escHtml(item.name)}</div>
+            ${item.path ? `<div class="comp-path">${escHtml(item.path)}</div>` : ''}
+          </div>
+        </div>`;
+      }
+    }
+    el.innerHTML = html;
+  }
+
+  function selectComp(id) {
+    selectedComponentId = id;
+    // Update selected state visually
+    document.querySelectorAll('.comp-item').forEach(el => el.classList.remove('selected'));
+    const el = document.getElementById(`ci-${id}`);
+    if (el) { el.classList.add('selected'); el.scrollIntoView({ block: 'nearest' }); }
+    updatePlaceBar();
+  }
+
+  function updatePlaceBar() {
+    const btn = document.getElementById('place-btn');
+    const info = document.getElementById('place-info');
+    const comp = allComponents.find(c => c.id === selectedComponentId);
+    const hasSlot = !!activeSlotForPlace;
+    const isReplace = placeMode === 'replace';
+
+    btn.textContent = isReplace ? 'Vervang' : 'Plaatsen';
+
+    if (comp && hasSlot) {
+      info.innerHTML = `${isReplace ? 'Vervang in' : 'Plaatsen in'} <strong>${escHtml(activeSlotForPlace.slotName)}</strong>`;
+      btn.disabled = false;
+    } else if (comp) {
+      info.innerHTML = `<strong>${escHtml(comp.name)}</strong> geselecteerd`;
+      btn.disabled = false;
+    } else if (hasSlot) {
+      info.textContent = `Slot: ${activeSlotForPlace.slotName}`;
+      btn.disabled = true;
+    } else {
+      info.textContent = 'Kies een component';
+      btn.disabled = true;
+    }
+  }
+
+  function placeSelected() {
+    if (!selectedComponentId || !state) return;
+    const slot = activeSlotForPlace;
+
+    if (placeMode === 'replace' && slot) {
+      send({ type: 'replace-in-slot', parentId: state.id, slotId: slot.slotId, componentId: selectedComponentId });
+    } else {
+      const x = slot ? slot.slotX : 0;
+      const y = slot ? slot.slotY : 0;
+      send({
+        type: 'place-component',
+        componentId: selectedComponentId,
+        parentId: slot ? state.id : null,
+        slotId: slot ? slot.slotId : null,
+        slotX: x,
+        slotY: y,
+      });
+      if (slot) setTimeout(() => switchTab('slots'), 300);
+    }
+  }
+
+  // ── Toast ──────────────────────────────────────────────────────
+  let toastTimer;
+  function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast${type ? ' ' + type : ''}`;
+    void t.offsetWidth;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ── Utils ──────────────────────────────────────────────────────
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function escAttr(s) {
+    return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>

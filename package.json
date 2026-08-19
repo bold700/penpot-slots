@@ -1,0 +1,9 @@
+{
+  "name": "penpot-slots",
+  "version": "0.1.0",
+  "description": "Slot-based flexible component areas for Penpot",
+  "scripts": {
+    "start": "python3 serve.py 7779",
+    "test": "node test/mock-run.mjs"
+  }
+}
