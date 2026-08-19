@@ -1,9 +1,9 @@
 {
   "name": "Slots",
   "description": "Add flexible slot areas to Penpot components",
-  "host": "http://localhost:7779",
+  "version": 2,
   "code": "plugin.js",
-  "icon": "/icon.svg",
+  "icon": "icon.svg",
   "permissions": [
     "content:read",
     "content:write",

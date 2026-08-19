@@ -1,6 +1,8 @@
 // plugin.js — runs inside Penpot sandbox
 
-penpot.ui.open('Slots', `?theme=${penpot.theme}`, {
+// Relative to the manifest location, so the same files run on localhost and
+// on any host, in a subfolder or at the domain root.
+penpot.ui.open('Slots', `index.html?theme=${penpot.theme}`, {
   width: 320,
   height: 560,
 });

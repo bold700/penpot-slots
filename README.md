@@ -11,11 +11,27 @@ Voegt een slot-systeem toe aan Penpot, vergelijkbaar met Figma Slots (open beta)
 
 ## Starten
 
+Lokaal:
+
 ```bash
 python3 serve.py  # draait op http://localhost:7779
 ```
 
 Voeg toe in Penpot via: `http://localhost:7779/manifest.json`
+
+## Hosting
+
+`manifest.json` gebruikt `"version": 2`, dus Penpot zoekt `plugin.js` en
+`icon.svg` op vanaf de plek waar de manifest staat. Zet de bestanden op een
+webserver, in de root of in een submap, en installeer:
+
+```
+https://jouw-host/pad/manifest.json
+```
+
+Er staat niets omgevingsspecifieks in de bestanden, dezelfde set werkt lokaal en
+gehost. De server moet wel `Access-Control-Allow-Origin: *` meesturen (of de
+Penpot-origin), dat is wat `serve.py` lokaal doet.
 
 ## Workflow
 
